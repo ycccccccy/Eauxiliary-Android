@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="my_color">#87CEEB</color>
+    <color name="colorPrimary">#FFFFFFFF</color>
+    <color name="colorPrimaryDark">#FF000000</color>
+    <color name="colorAccent">#87CEFA</color>
+    <color name="colorWarning">#faf765</color> <!-- 深黄色 -->
+    <color name="colorError">#ff6a4f</color> <!-- 深红色 -->
+    <color name="colorSuccess">#75ff83</color> <!-- 深绿色 -->
+
+    <color name="lightBackgroundStart">#2196F3</color>  <!-- 浅蓝色 -->
+    <color name="lightBackgroundEnd">#FFFFFF</color>      <!-- 白色 -->
+    <color name="lightBottomNav">#EEEEEE</color>      <!-- 浅灰色 -->
+    <color name="darkBottomNav">#212121</color> <!-- 深灰色 -->
+
+    <color name="primaryColor">#87CEEB</color>
+    <color name="primaryLightColor">#87CEFA</color>
+    <color name="onPrimaryColor">#FFFFFF</color>
+    <color name="light_background">#FFFFFF</color> <!-- 白色 -->
+    <color name="dark_background">#121212</color> <!-- 比纯黑略浅的灰色 -->
+    <color name="light_blue">#ADD8E6</color> <!--  浅蓝色，根据需要调整 -->
+    <color name="dark_blue">#1976D2</color>
+
+    <color name="dark_card_background">#202124</color> <!-- 比深色背景略浅的颜色 -->
+
+    <color name="light_nav">#FFFFFF</color> <!-- 比深色背景略浅的颜色 -->
+    <color name="dark_nav">#212121</color> <!-- 比深色背景略浅的颜色 -->
+
+
+</resources>

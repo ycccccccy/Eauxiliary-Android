@@ -1,0 +1,7 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="android:selectableItemBackground">@color/dark_nav</item>
+    </style>
+</resources>

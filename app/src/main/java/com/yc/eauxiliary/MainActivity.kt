@@ -75,9 +75,9 @@ private const val UPDATE_CHECK_URL =
     "https://gitee.com/asdasasdasdasfsdf/version-check/raw/master/version.html"
 private const val DOWNLOAD_FILE_NAME = "Eauxiliary.apk"
 private const val FILE_PROVIDER_AUTHORITY = "com.yc.at_ets.fileprovider"
-val supabaseUrl = "https://bydbvhsknggjkyifhywq.supabase.co" // 替换为你的 Supabase URL
+val supabaseUrl = "https://bydbvhsknggjkyifhywq.supabase.co" // Supabase URL 数据库的url
 val supabaseKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZGJ2aHNrbmdnamt5aWZoeXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk5OTY0ODIsImV4cCI6MjA0NTU3MjQ4Mn0.ojALKrXWOJE3z0-WwObcg9p3wPHNgEddGy0nIWoXbdk" // 替换为你的 Supabase Key
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZGJ2aHNrbmdnamt5aWZoeXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk5OTY0ODIsImV4cCI6MjA0NTU3MjQ4Mn0.ojALKrXWOJE3z0-WwObcg9p3wPHNgEddGy0nIWoXbdk" // Supabase Key
 val client = OkHttpClient()
 private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 

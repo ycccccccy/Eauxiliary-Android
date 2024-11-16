@@ -29,26 +29,26 @@ Android应用，旨在帮助学生高效地获取和查看E听说答案。它能
 
 ## 项目内容
 
-About: 负责显示“关于”页面，其中包含应用的版本信息、开发者信息、联系方式等
+* About: 负责显示“关于”页面，其中包含应用的版本信息、开发者信息、联系方式等
 
-AnswerActivity: 这个类负责显示具体问题的答案。 它接收来自 MainActivity 的答案数据，并将其显示在屏幕上
+* AnswerActivity: 这个类负责显示具体问题的答案。 它接收来自 MainActivity 的答案数据，并将其显示在屏幕上
 
-DirectoryFragment: 用于显示目录结构或文件列表，让用户选择E听说所在的目录
+* DirectoryFragment: 用于显示目录结构或文件列表，让用户选择E听说所在的目录
 
-EULA: 这个类负责显示最终用户许可协议 (End-User License Agreement)。 用户需要同意 EULA 才能使用应用
+* EULA: 这个类负责显示最终用户许可协议 (End-User License Agreement)。 用户需要同意 EULA 才能使用应用
 
-MainActivity.kt: 这是应用的主活动类，负责应用的启动和主要功能的协调。 它处理用户交互、权限请求、版本更新检查等
+* MainActivity.kt: 这是应用的主活动类，负责应用的启动和主要功能的协调。 它处理用户交互、权限请求、版本更新检查等
 
-OnboardingActivity: 这个类负责应用的首次启动引导流程，例如介绍应用的功能、请求必要的权限等
+* OnboardingActivity: 这个类负责应用的首次启动引导流程，例如介绍应用的功能、请求必要的权限等
 
-PermissionFragment: 用于请求和处理应用所需的权限。 这可以提供更友好的用户体验
+* PermissionFragment: 用于请求和处理应用所需的权限。 这可以提供更友好的用户体验
 
-SecureStorageUtils: 这个工具类负责安全地存储和读取敏感数据，例如用户凭据、API 密钥等。
+* SecureStorageUtils: 这个工具类负责安全地存储和读取敏感数据，例如用户凭据、API 密钥等。
 它负责管理黑名单、白名单、激活状态和答案缓存
 
-SettingsActivity: 这个类负责应用的设置页面，允许用户配置应用的各项参数，例如单答案模式、更新检查频率等
+* SettingsActivity: 这个类负责应用的设置页面，允许用户配置应用的各项参数，例如单答案模式、更新检查频率等
 
-Shouce: 一个显示使用手册或帮助文档的 Activity
+* Shouce: 一个显示使用手册或帮助文档的 Activity
 
 ## 构建
 

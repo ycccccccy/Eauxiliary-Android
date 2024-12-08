@@ -41,7 +41,6 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
@@ -510,13 +509,12 @@ class MainActivity : AppCompatActivity() {
 
     // 获取文件夹数据并更新UI
     private fun fetchFoldersAndUpdateUI() {
-
         // 检查是否已阅读隐私协议
         if (!hasReadPrivacyPolicy()) {
             startActivity(Intent(this, EULA::class.java).apply {
-                putExtra("source", "MainActivity") //  添加来源信息
+                putExtra("source", "MainActivity") // 添加来源信息
             })
-            return //  停止 MainActivity 的后续初始化操作
+            return // 停止 MainActivity 的后续初始化操作
         }
 
         val progressBar = findViewById<ProgressBar>(R.id.progress_bar)
@@ -553,8 +551,8 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         // 检查激活状态 - 使用 ActivationUtils
-                        val isActivated =
-                            SecureStorageUtils.isActivated(this@MainActivity) // 注意上下文
+                        //val isActivated = SecureStorageUtils.isActivated(this@MainActivity) // 注意上下文
+                        val isActivated = true // 所有用户都激活
 
                         if (userType == UserType.NORMAL && !isActivated) {
                             showCustomSnackbar(
@@ -568,12 +566,13 @@ class MainActivity : AppCompatActivity() {
                         val displayGroups =
                             filterFolderGroups(groupedFolders, isActivated) // 传递 isActivated
 
-                        // 更新文件夹列表适配器
-                        folderAdapter.updateData(displayGroups)
+                        // 标记题库类型并更新文件夹列表适配器
+                        val markedGroups = markAndFilterGroups(displayGroups)
+                        folderAdapter.updateData(markedGroups) // 更新适配器的数据
+
                         progressBar.visibility = View.GONE // 隐藏 ProgressBar
                         updateScanningProgress(100, "扫描完成!") // 更新进度到 100%
                     }
-
                 } else {
                     Log.e(TAG, "未找到资源文件夹")
                     withContext(Dispatchers.Main) {
@@ -598,6 +597,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     // 过滤文件夹组
     private fun filterFolderGroups(
@@ -628,8 +628,19 @@ class MainActivity : AppCompatActivity() {
     // 获取排序后的资源文件夹列表
     private fun getSortedResourceFolders(resourceFolder: DocumentFile): List<DocumentFile> {
         return resourceFolder.listFiles()
-            .filter { it.isDirectory && it.name != "common" }
+            .filter {
+                it.isDirectory && it.name != "common" && it.listFiles()
+                    .any { it.name == "content.json" }
+            } // 添加过滤条件
             .sortedByDescending { it.lastModified() }
+    }
+
+    // 标记题库类型并更新文件夹列表适配器
+    private fun markAndFilterGroups(groupedFolders: List<List<DocumentFile>>): List<Pair<List<DocumentFile>, String>> { // 修改返回值类型
+        return groupedFolders.map { group ->
+            val tag = if (group.size == 3) "高中" else if (group.size == 7) "初中" else "未知"
+            Pair(group, tag) // 返回 Pair，包含文件夹组和标签
+        }
     }
 
     // 按时间分组资源文件夹 (在主线程中执行)
@@ -637,42 +648,57 @@ class MainActivity : AppCompatActivity() {
         return withContext(Dispatchers.Main) {
             val groupedFolders = mutableListOf<List<DocumentFile>>()
             var tempGroup = mutableListOf<DocumentFile>()
-            val totalGroupsToForm = (folders.size + 2) / 3 // 计算需要分的组数
-            var processedGroups = 0
 
             for (i in folders.indices) {
+                val currentFolder = folders[i]
+
                 if (tempGroup.isEmpty()) {
-                    tempGroup.add(folders[i])
+                    tempGroup.add(currentFolder)
                 } else {
+                    val lastFolder = tempGroup.last()
                     val timeDiff =
-                        Math.abs(folders[i].lastModified() - tempGroup.last().lastModified())
-                    if (timeDiff <= 60 * 1000 && tempGroup.size < 3) {
-                        tempGroup.add(folders[i])
+                        Math.abs(currentFolder.lastModified() - lastFolder.lastModified())
+
+                    if (timeDiff <= 60 * 1000) { // 同一分钟内
+                        tempGroup.add(currentFolder) // 先添加到临时分组
                     } else {
-                        if (tempGroup.size == 3) {
-                            groupedFolders.add(tempGroup)
-                            processedGroups++
-                            val progress = (processedGroups.toFloat() / totalGroupsToForm) * 100
-                            updateScanningProgress(
-                                progress.toInt(),
-                                "正在分析... ${progress.toInt()}%"
-                            )
-                            delay(10) // 延迟 50 毫秒 注意，没有这个有可能导致ui刷新不过来，不建议删除
-                        }
-                        tempGroup = mutableListOf(folders[i])
+                        // 不同时间，处理 tempGroup
+                        groupedFolders.addAll(splitGroupByType(tempGroup)) // 根据数量拆分
+                        tempGroup = mutableListOf(currentFolder) // 开始新的分组
                     }
                 }
             }
-            if (tempGroup.isNotEmpty()) { // 处理最后一组，即使不足3个也要添加 因为存在一个资源文件夹占位
-                groupedFolders.add(tempGroup)
-                processedGroups++
-                val progress = (processedGroups.toFloat() / totalGroupsToForm) * 100
-                updateScanningProgress(progress.toInt(), "正在分析... ${progress.toInt()}%")
+
+            // 处理最后一个 tempGroup
+            if (tempGroup.isNotEmpty()) {
+                groupedFolders.addAll(splitGroupByType(tempGroup))
             }
+
             groupedFolders
         }
     }
 
+    private fun splitGroupByType(group: List<DocumentFile>): List<List<DocumentFile>> {
+        val result = mutableListOf<List<DocumentFile>>()
+        when {
+            group.size % 3 == 0 -> {  // 高中
+                for (i in group.indices step 3) {
+                    result.add(group.subList(i, minOf(i + 3, group.size)))
+                }
+            }
+
+            group.size % 7 == 0 -> {  // 初中
+                for (i in group.indices step 7) {
+                    result.add(group.subList(i, minOf(i + 7, group.size)))
+                }
+            }
+
+            else -> { // 其他情况或未知题型
+                result.add(group)  // 直接添加到结果列表中
+            }
+        }
+        return result
+    }
 
     private fun onFolderClick(group: List<DocumentFile>, cx: Int, cy: Int) {
         // 获取答案数据
@@ -686,7 +712,6 @@ class MainActivity : AppCompatActivity() {
         )
 
         updateScanningProgress(0, " ")
-
 
         // 启动 AnswerActivity，并传递 options 对象
         val intent = Intent(this, AnswerActivity::class.java)
@@ -702,10 +727,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 获取文件夹组中的答案数据
     private fun getAnswersFromFolderGroup(group: List<DocumentFile>): String {
-        val rolePlayBuilder = StringBuilder()
+        val listeningChoiceBuilder = StringBuilder()
+        val answeringQuestionsBuilder = StringBuilder()
         val storyBuilder = StringBuilder()
+        val askingQuestionsBuilder = StringBuilder()
+        val questionBuilder = StringBuilder()
 
         updateScanningProgress(0, "开始读取答案...")
 
@@ -714,26 +741,36 @@ class MainActivity : AppCompatActivity() {
             return cachedAnswers // 如果缓存存在，直接返回缓存的答案
         }
 
-        val totalFiles = group.sumOf { it.listFiles().size } // 计算所有文件数量
+        val totalFiles = group.sumOf { it.listFiles().size }
         var processedFiles = 0
 
         for (folder in group) {
             for (file in folder.listFiles()) {
-
                 if (file.name == "content.json") {
                     try {
                         contentResolver.openInputStream(file.uri)?.use { inputStream ->
                             val data = inputStream.bufferedReader().use { it.readText() }
                             val jsonData = JSONObject(data)
 
-                            // 解析角色扮演答案
-                            rolePlayBuilder.append(parseQuestionData(jsonData))
+                            when (jsonData.getString("structure_type")) {
+                                "collector.role" -> { // 初中
+                                    questionBuilder.append(parseQuestionData(jsonData, false))
+                                }
 
-                            // 解析短文复述 - 检查 structure_type 和 value 字段
-                            if (jsonData.has("structure_type") && jsonData.getString("structure_type") == "collector.picture" &&
-                                jsonData.has("info") && jsonData.getJSONObject("info").has("value")
-                            ) {
-                                storyBuilder.append(parseStoryData(jsonData))
+                                "collector.3q5a" -> { // 高中
+                                    questionBuilder.append(parseQuestionData(jsonData, true))
+                                }
+
+                                "collector.picture" -> {
+                                    storyBuilder.append(parseStoryData(jsonData))
+                                }
+
+                                else -> {
+                                    Log.e(
+                                        "AnswerActivity",
+                                        "未知的 structure_type: ${jsonData.getString("structure_type")}"
+                                    )
+                                }
                             }
                         }
 
@@ -742,90 +779,111 @@ class MainActivity : AppCompatActivity() {
                         updateScanningProgress(
                             progress.toInt(),
                             "正在读取答案... ${progress.toInt()}%"
-                        ) // 更新进度百分比
+                        )
 
                     } catch (e: JSONException) {
                         Log.e("AnswerActivity", "JSON 解析错误: ${e.message}", e)
-                        // 可以选择在此处向用户显示错误消息，或记录错误信息以供后续分析
                     } catch (e: Exception) {
                         Log.e("AnswerActivity", "读取文件时发生错误: ${e.message}", e)
-                        // 同样可以在这里处理其他类型的异常
                     }
                 }
-
             }
-
         }
 
-        // 解析完成后缓存答案
-        SecureStorageUtils.cacheAnswers(
-            this,
-            group,
-            rolePlayBuilder.toString() + storyBuilder.toString()
-        )
+        val combinedAnswers = questionBuilder.toString() +
+                listeningChoiceBuilder.toString() +
+                answeringQuestionsBuilder.toString() +
+                storyBuilder.toString() +
+                askingQuestionsBuilder.toString()
+
+        SecureStorageUtils.cacheAnswers(this, group, combinedAnswers)
 
         updateScanningProgress(100, "解析完成!")
 
-        return rolePlayBuilder.toString() + storyBuilder.toString()
+        return combinedAnswers
     }
 
-    // 解析问题数据
-    private fun parseQuestionData(data: JSONObject): String {  // 返回 String 类型，避免重复创建 StringBuilder
+
+    private fun parseQuestionData(data: JSONObject, isHighSchool: Boolean): String {
         val builder = StringBuilder()
-        if (data.getJSONObject("info").has("question")) {
-            val questions = data.getJSONObject("info").getJSONArray("question")
-            for (j in 0 until Math.min(questions.length(), 8)) {
-                val question = questions.getJSONObject(j)
-                builder.appendLine() // 使用 appendLine() 添加换行符
-                builder.append("角色扮演 ${j + 1} :\n")
-                builder.append(parseAnswers(question.getJSONArray("std")))
+        val info = data.getJSONObject("info")
+        val questions = info.getJSONArray("question")
+
+        for (j in 0 until questions.length()) {
+            val question = questions.getJSONObject(j)
+            val stdAnswers = question.getJSONArray("std")
+
+
+            if (isHighSchool) { // 高中
+                builder.appendLine("角色扮演 ${j + 1}:\n\n") //
+            } else { // 初中
+                val ask = question.getString("ask")
+                when {
+                    ask.contains("(") && ask.contains(")") -> {
+                        builder.appendLine("听选信息 ${j + 1}: ${parseQuestion(ask)}\n\n")
+                    }
+
+                    ask.contains("问题") -> {
+                        builder.appendLine("提问 ${j + 1}: ${parseQuestion(ask)}\n\n")
+                    }
+
+                    else -> {
+                        builder.appendLine("回答问题 ${j + 1}: ${parseQuestion(ask)}\n\n")
+                    }
+                }
             }
+
+            for (k in 0 until stdAnswers.length()) {
+                val answer = stdAnswers.getJSONObject(k)
+                val answerText = answer.getString("value")
+                val plainText = removeHtmlTags(answerText)
+                builder.append("${k + 1}. $plainText\n\n")
+                if (isSingleAnswerMode) break
+            }
+            builder.append("\n") // 每个题目后添加换行
         }
+
         return builder.toString()
     }
+
+
+    // 解析问题，去除HTML标签和多余的换行符
+    private fun parseQuestion(questionText: String): String {
+        return questionText
+            .replace(Regex("<.*?>"), "")
+            .replace(Regex("</?br>"), "")
+            .replace(Regex("ets_th[12]"), "")
+            .replace("\n", "") // 去除所有换行符
+            .trim() // 去除首尾空格
+    }
+
 
     // 解析短文数据
     private fun parseStoryData(data: JSONObject): String {
         val builder = StringBuilder()
-        val info = data.getJSONObject("info")
+        val info = data.optJSONObject("info")  // 使用 optJSONObject 避免空指针异常
 
-        if (!isSingleAnswerMode && info.has("value")) { // 非单答案模式才显示原文
+        if (!isSingleAnswerMode && info != null && info.has("value")) {
             val originalText = info.getString("value")
             val plainOriginalText = removeHtmlTags(originalText)
-            builder.appendLine("\n短文复述原文：\n$plainOriginalText\n\n") // 显示原文，并添加换行符区分答案
+            builder.appendLine("\n短文复述原文：\n$plainOriginalText\n\n")
         }
 
-
-        if (info.has("std")) {
-            builder.appendLine("短文复述答案：\n") // 短文复述标题
+        if (info != null && info.has("std")) {
+            builder.appendLine("短文复述答案：\n")
             val stdArray = info.getJSONArray("std")
-            val numAnswers = if (isSingleAnswerMode) 1 else stdArray.length() // 单答案模式只显示一个答案
+            val numAnswers = if (isSingleAnswerMode) 1 else stdArray.length()
 
             for (i in 0 until numAnswers) {
                 val stdObject = stdArray.getJSONObject(i)
                 if (stdObject.has("value")) {
                     val answerText = stdObject.getString("value")
                     val plainAnswerText = removeHtmlTags(answerText)
-                    builder.append("${i + 1}. $plainAnswerText\n\n") // 添加答案序号和内容
+                    builder.append("${i + 1}. $plainAnswerText\n\n")
                 }
             }
         }
 
-
-        return builder.toString()
-    }
-
-    // 解析答案
-    private fun parseAnswers(answers: JSONArray): String { // 返回 String 类型
-        val builder = StringBuilder()
-        for (k in 0 until answers.length()) {
-            builder.appendLine()
-            val answer = answers.getJSONObject(k)
-            val answerText = answer.getString("value")
-            val plainText = removeHtmlTags(answerText)
-            builder.append("${k + 1}. $plainText\n")
-            if (isSingleAnswerMode) break
-        }
         return builder.toString()
     }
 
@@ -1075,13 +1133,13 @@ class MainActivity : AppCompatActivity() {
 // 文件夹列表适配器
 class FolderAdapter(
     private val context: Context,
-    private val onFolderClick: (group: List<DocumentFile>, cx: Int, cy: Int) -> Unit // 修改 lambda 表达式类型
+    private val onFolderClick: (group: List<DocumentFile>, cx: Int, cy: Int) -> Unit
 ) : RecyclerView.Adapter<FolderAdapter.ViewHolder>() {
 
-    private val folderGroups = mutableListOf<List<DocumentFile>>()
+    private val folderGroups = mutableListOf<Pair<List<DocumentFile>, String>>()
     private val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault())
 
-    fun updateData(newFolderGroups: List<List<DocumentFile>>) {
+    fun updateData(newFolderGroups: List<Pair<List<DocumentFile>, String>>) { // 修改参数类型
         folderGroups.clear()
         folderGroups.addAll(newFolderGroups)
         notifyDataSetChanged()
@@ -1106,11 +1164,16 @@ class FolderAdapter(
         private val buttonLayout: LinearLayout = itemView.findViewById(R.id.button_layout)
         private val titleTextView: TextView = itemView.findViewById(R.id.title_text_view)
         private val timeTextView: TextView = itemView.findViewById(R.id.time_text_view)
+        private val tagTextView: TextView =
+            itemView.findViewById(R.id.tag_text_view) // 添加标签 TextView
 
-        fun bind(group: List<DocumentFile>, position: Int) {
-            val folderName = group[0].name?.substring(0, 6) ?: "文件夹"
+        fun bind(group: Pair<List<DocumentFile>, String>, position: Int) {
+            val (folders, tag) = group // 解构 Pair
+            val folderName = folders[0].name?.substring(0, 6) ?: "文件夹"
             titleTextView.text = "模考 $folderName "
-            timeTextView.text = "下载时间: ${sdf.format(Date(group[0].lastModified()))}"
+            timeTextView.text = "时间:${sdf.format(Date(folders[0].lastModified()))}"
+            tagTextView.text = tag // 设置标签
+
 
             buttonLayout.setOnClickListener {
                 // 获取被点击的按钮
@@ -1123,7 +1186,7 @@ class FolderAdapter(
                 val cy = buttonLocation[1] + buttonView.height / 2
 
                 // 调用 onFolderClick 函数，并传递 group、cx 和 cy 参数
-                onFolderClick.invoke(group, cx, cy)
+                onFolderClick.invoke(group.first, cx, cy) // 使用 group.first 获取文件夹列表
             }
 
             // 添加淡入动画
@@ -1134,5 +1197,6 @@ class FolderAdapter(
             }
             buttonLayout.startAnimation(fadeInAnimation)
         }
+
     }
 }

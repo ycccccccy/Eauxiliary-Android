@@ -4,14 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     tools:context=".MainActivity">
+    <!-- 添加背景选择器 -->
+
 
     <!--顶部-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
-        android:background="?android:attr/windowBackground"
         android:padding="16dp">
 
         <ImageView
@@ -35,6 +37,7 @@
             android:textSize="20sp"
             app:layout_constraintStart_toEndOf="@id/backArrow"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -60,32 +63,33 @@
             android:text="解析数据中 马上就好" />
 
 
-        <!-- 使用 FrameLayout 包裹 RecyclerView -->
         <FrameLayout
             android:id="@+id/recycler_view_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+            <!-- 使用 FrameLayout 包裹 RecyclerView -->
 
-            <!-- 将 LinearLayout 替换为 RecyclerView -->
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
         </FrameLayout>
 
     </LinearLayout>
+
 
     <LinearLayout
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="?android:attr/windowBackground"
         android:orientation="horizontal">
 
-        <LinearLayout
+        <TextView
             android:id="@+id/homeButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -93,26 +97,13 @@
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
             android:onClick="onHomeClick"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="16dp"
+            android:text="主页"
+            android:textColor="@color/navigation_text_selector"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/homeIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_home_black_24dp"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="主页"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-
-        <LinearLayout
+        <TextView
             android:id="@+id/settingsButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -120,23 +111,12 @@
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
             android:onClick="onSettingsClick"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="16dp"
+            android:text="设置"
+            android:textColor="@color/navigation_text_selector"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/settingsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/baseline_menu_24"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="设置"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="14sp" />
-        </LinearLayout>
     </LinearLayout>
 
 </FrameLayout>

@@ -14,7 +14,6 @@ import android.provider.DocumentsContract
 import android.provider.Settings
 import android.text.InputType
 import android.util.Base64
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.EditText
@@ -45,10 +44,6 @@ class SettingsActivity : AppCompatActivity() {
     var directoryUri: Uri? = null
     private var currentSnackbar: Snackbar? = null
     private var isSnackbarShowing = false
-
-    private lateinit var homeIcon: ImageView
-    private lateinit var settingsIcon: ImageView
-    private lateinit var cloudIcon: ImageView
 
     @SuppressLint("RestrictedApi")
     private fun showCustomSnackbar(message: String, type: String, color: Int) {
@@ -111,12 +106,6 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         updateStatusBarTextColor(window)
-
-        // 初始化图标
-        homeIcon = findViewById(R.id.homeIcon)
-        settingsIcon = findViewById(R.id.settingsIcon)
-        resetIcons()
-        settingsIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color)) // 使用自定义颜色
 
 
         switchSingleAnswerMode = findViewById(R.id.switchSingleAnswerMode)
@@ -307,18 +296,29 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     fun qingchuhuancun(view: View) {
-        // 提示框
         MaterialAlertDialogBuilder(this)
             .setTitle("注意")
-            .setMessage("真的要清除所有缓存吗？已下载的所有试题都会消失并且需要重新下载，可能会导致进度丢失或其他异常！")
+            .setMessage("这里只是清除本工具内的答案缓存，可能解决答案显示错误的问题，如果仍然错误则需要清除E听说下载的试题，你需要前往E听说应用-我的-清除缓存") // 更正提示信息
             .setPositiveButton("确定") { dialog, _ ->
                 dialog.dismiss()
-                showCustomSnackbar(
-                    "已开始后台清除，不要离开此界面",
-                    "warning",
-                    resources.getColor(R.color.colorWarning)
-                )
-                fetchDataAndUpdateUI()
+
+                val sharedPrefs = SecureStorageUtils.getSharedPrefs(this)
+                if (sharedPrefs != null) {
+                    sharedPrefs.edit().clear().apply()
+                    showCustomSnackbar(
+                        "缓存已清除",
+                        "success",
+                        resources.getColor(R.color.colorSuccess)
+                    )
+                    // 可选：在此处添加重新加载数据和更新 UI 的逻辑，如果需要的话
+                    fetchDataAndUpdateUI() //如果需要的话，可以在这里重新加载数据和更新UI
+                } else {
+                    showCustomSnackbar(
+                        "清除缓存失败",
+                        "error",
+                        resources.getColor(R.color.colorError)
+                    )
+                }
             }
             .setNegativeButton("取消") { dialog, _ ->
                 dialog.dismiss()
@@ -350,26 +350,18 @@ class SettingsActivity : AppCompatActivity() {
 
 
     fun onSettingsClick(view: View) {
-        resetIcons()
-        settingsIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color)) // 使用自定义颜色
+        findViewById<TextView>(R.id.homeButton).isSelected = false
+        findViewById<TextView>(R.id.settingsButton).isSelected = true
     }
 
     fun onHomeClick(view: View) {
-        resetIcons()
-        homeIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color)) // 使用自定义颜色
+        findViewById<TextView>(R.id.homeButton).isSelected = true
+        findViewById<TextView>(R.id.settingsButton).isSelected = false
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
     }
 
-    @SuppressLint("ResourceType")
-    private fun resetIcons() {
-        val typedValue = TypedValue()
-        theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
-        val primaryColor = ContextCompat.getColor(this, typedValue.resourceId)
-        homeIcon.setColorFilter(primaryColor) // 重置图标颜色为自适应颜色
-        settingsIcon.setColorFilter(primaryColor) // 重置图标颜色为自适应颜色
-    }
 
     fun saveStudentName(context: Context, studentName: String) {
         val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)

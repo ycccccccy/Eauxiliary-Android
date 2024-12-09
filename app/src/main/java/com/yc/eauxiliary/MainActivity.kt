@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.transition.TransitionInflater
 import android.util.Log
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -31,7 +30,6 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -140,8 +138,6 @@ fun updateStatusBarTextColor(window: Window) {
 class MainActivity : AppCompatActivity() {
     // UI 元素
     private lateinit var bottomNavigation: LinearLayout
-    private lateinit var homeIcon: ImageView
-    private lateinit var settingsIcon: ImageView
     private lateinit var pageTitle: TextView
     private lateinit var backArrow: ImageView
     private lateinit var textView: TextView
@@ -228,8 +224,6 @@ class MainActivity : AppCompatActivity() {
     // 初始化 UI 元素
     private fun initUI() {
         bottomNavigation = findViewById(R.id.bottom_navigation)
-        homeIcon = findViewById(R.id.homeIcon)
-        settingsIcon = findViewById(R.id.settingsIcon)
         pageTitle = findViewById(R.id.pageTitle)
         backArrow = findViewById(R.id.backArrow)
         textView = findViewById(R.id.textView)
@@ -242,9 +236,6 @@ class MainActivity : AppCompatActivity() {
             onFolderClick(group, cx, cy) // 传递 cx 和 cy 参数
         }
         container.adapter = folderAdapter
-
-        resetIcons()
-        homeIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color))
 
         backArrow.setOnClickListener { onBackArrowClick() }
     }
@@ -727,6 +718,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //读取答案数据
     private fun getAnswersFromFolderGroup(group: List<DocumentFile>): String {
         val listeningChoiceBuilder = StringBuilder()
         val answeringQuestionsBuilder = StringBuilder()
@@ -840,7 +832,7 @@ class MainActivity : AppCompatActivity() {
                 builder.append("${k + 1}. $plainText\n\n")
                 if (isSingleAnswerMode) break
             }
-            builder.append("\n") // 每个题目后添加换行
+            builder.append("\n") 
         }
 
         return builder.toString()
@@ -932,8 +924,8 @@ class MainActivity : AppCompatActivity() {
 
     // 底部导航栏点击事件：设置
     fun onSettingsClick(view: View) {
-        resetIcons()
-        settingsIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color))
+        findViewById<TextView>(R.id.homeButton).isSelected = false
+        findViewById<TextView>(R.id.settingsButton).isSelected = true
 
         val intent = Intent(this, SettingsActivity::class.java)
         startActivity(intent)
@@ -942,18 +934,8 @@ class MainActivity : AppCompatActivity() {
 
     // 底部导航栏点击事件：主页
     fun onHomeClick(view: View) {
-        resetIcons()
-        homeIcon.setColorFilter(ContextCompat.getColor(this, R.color.my_color))
-    }
-
-    // 重置图标颜色
-    @SuppressLint("ResourceType")
-    private fun resetIcons() {
-        val typedValue = TypedValue()
-        theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
-        val primaryColor = ContextCompat.getColor(this, typedValue.resourceId)
-        homeIcon.setColorFilter(primaryColor)
-        settingsIcon.setColorFilter(primaryColor)
+        findViewById<TextView>(R.id.homeButton).isSelected = true
+        findViewById<TextView>(R.id.settingsButton).isSelected = false
     }
 
     // 显示自定义 Snackbar

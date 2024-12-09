@@ -1,8 +1,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     tools:context=".SettingsActivity">
 
     <!--顶部-->
@@ -10,7 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
-        android:background="?android:attr/windowBackground"
         android:padding="16dp">
 
         <TextView
@@ -276,15 +275,15 @@
 
     </ScrollView>
 
+
     <LinearLayout
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="?android:attr/windowBackground"
         android:orientation="horizontal">
 
-        <LinearLayout
+        <TextView
             android:id="@+id/homeButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -292,26 +291,13 @@
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
             android:onClick="onHomeClick"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="16dp"
+            android:text="主页"
+            android:textColor="@color/navigation_text_selector"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/homeIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_home_black_24dp"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="主页"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-
-        <LinearLayout
+        <TextView
             android:id="@+id/settingsButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -319,23 +305,12 @@
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
             android:onClick="onSettingsClick"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="16dp"
+            android:text="设置"
+            android:textColor="@color/navigation_text_selector"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/settingsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/baseline_menu_24"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="设置"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="14sp" />
-        </LinearLayout>
     </LinearLayout>
 
 

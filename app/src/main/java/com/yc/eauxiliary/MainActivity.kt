@@ -10,6 +10,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -32,6 +33,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -187,6 +189,9 @@ class MainActivity : AppCompatActivity() {
         // 预加载学生姓名和用户类型
         loadStudentData()
 
+        findViewById<TextView>(R.id.homeButton).isSelected = true
+        findViewById<TextView>(R.id.settingsButton).isSelected = false
+
         // 检查版本更新
         checkForUpdateAsync(packageManager.getPackageInfo(packageName, 0).versionName)
 
@@ -232,8 +237,8 @@ class MainActivity : AppCompatActivity() {
 
         // 设置 RecyclerView 的布局管理器和适配器
         container.layoutManager = LinearLayoutManager(this)
-        folderAdapter = FolderAdapter(this) { group, cx, cy ->
-            onFolderClick(group, cx, cy) // 传递 cx 和 cy 参数
+        folderAdapter = FolderAdapter(this) { group, cardView ->
+            onFolderClick(group, cardView) // 正确的参数
         }
         container.adapter = folderAdapter
 
@@ -402,14 +407,6 @@ class MainActivity : AppCompatActivity() {
                         client.newCall(insertRequest).execute()
                     }
 
-                    //上传/更新成功后提示用户
-                    withContext(Dispatchers.Main) {
-                        showCustomSnackbar(
-                            "答案已成功上传/更新",
-                            "success",
-                            resources.getColor(R.color.colorSuccess)
-                        )
-                    }
 
                 } else {
                     // 处理查询/上传/更新失败的情况
@@ -691,29 +688,30 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private fun onFolderClick(group: List<DocumentFile>, cx: Int, cy: Int) {
-        // 获取答案数据
+    private fun onFolderClick(group: List<DocumentFile>, cardView: View) {
         val answers = getAnswersFromFolderGroup(group)
-
-        // 创建 ActivityOptionsCompat 对象，用于传递动画信息
-        val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
-            this,
-            findViewById<View>(android.R.id.content), // 使用根布局作为共享元素
-            "circular_reveal" // 共享元素的名称
-        )
 
         updateScanningProgress(0, " ")
 
-        // 启动 AnswerActivity，并传递 options 对象
+        // 获取卡片在屏幕中的位置
+        val cardRect = Rect()
+        cardView.getGlobalVisibleRect(cardRect) // 使用 getGlobalVisibleRect()
+
         val intent = Intent(this, AnswerActivity::class.java)
-        intent.putExtra("ANSWERS", answers)
-        intent.putExtra("CX", cx)
-        intent.putExtra("CY", cy)
+        intent.putExtra("ANSWERS", answers) //  恢复这一行，传递答案数据
+        intent.putExtra("CARD_VIEW_LEFT", cardRect.left)
+        intent.putExtra("CARD_VIEW_TOP", cardRect.top)
+        intent.putExtra("CARD_VIEW_WIDTH", cardRect.width())
+        intent.putExtra("CARD_VIEW_HEIGHT", cardRect.height())
+
+        // 使用卡片 View 作为共享元素
+        val options =
+            ActivityOptionsCompat.makeSceneTransitionAnimation(this, cardView, "card_transition")
         startActivity(intent, options.toBundle())
 
         // 异步上传或更新答案
-        val folderName = group[0].name ?: return // 获取文件夹名称
-        CoroutineScope(Dispatchers.IO).launch {
+        val folderName = group[0].name ?: return
+        lifecycleScope.launch(Dispatchers.IO) { // 使用 lifecycleScope
             uploadOrUpdateAnswer(folderName, answers, studentName)
         }
     }
@@ -1115,7 +1113,7 @@ class MainActivity : AppCompatActivity() {
 // 文件夹列表适配器
 class FolderAdapter(
     private val context: Context,
-    private val onFolderClick: (group: List<DocumentFile>, cx: Int, cy: Int) -> Unit
+    private val onFolderClick: (group: List<DocumentFile>, cardView: View) -> Unit // 修改参数类型
 ) : RecyclerView.Adapter<FolderAdapter.ViewHolder>() {
 
     private val folderGroups = mutableListOf<Pair<List<DocumentFile>, String>>()
@@ -1164,11 +1162,9 @@ class FolderAdapter(
                 // 获取按钮在屏幕中的坐标
                 val buttonLocation = IntArray(2)
                 buttonView.getLocationOnScreen(buttonLocation)
-                val cx = buttonLocation[0] + buttonView.width / 2
-                val cy = buttonLocation[1] + buttonView.height / 2
 
-                // 调用 onFolderClick 函数，并传递 group、cx 和 cy 参数
-                onFolderClick.invoke(group.first, cx, cy) // 使用 group.first 获取文件夹列表
+                // 将 buttonLayout 作为 cardView 参数传递
+                onFolderClick(group.first, it) // 将 buttonLayout 本身作为 cardView 参数传递
             }
 
             // 添加淡入动画

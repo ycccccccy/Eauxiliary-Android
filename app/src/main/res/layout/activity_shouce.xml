@@ -96,7 +96,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="EAuxiliary 为个人开发，短期内无开源计划，一切开发旨在学习，本项目永久免费开放，欢迎提交你的想法和意见\n\n如果有任何疑问或需求前往'关于'页面添加作者联系方式"
+                android:text="EAuxiliary 为个人开发，目前已在Github开源，一切开发旨在学习，本项目永久免费开放，欢迎提交你的想法和意见\n\n如果有任何疑问或需求前往'关于'页面添加作者联系方式"
                 android:textSize="12sp" />
 
 

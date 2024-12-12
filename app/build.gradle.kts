@@ -19,17 +19,16 @@ android {
             keyPassword = "ycccccccy"
         }
     }
+
     namespace = "com.yc.eauxiliary"
     compileSdk = 34
-
-
 
     defaultConfig {
         applicationId = "com.yc.eauxiliary"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "3.5.10"
+        versionName = "4.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val buildTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
         resValue("string", "build_time", buildTime)

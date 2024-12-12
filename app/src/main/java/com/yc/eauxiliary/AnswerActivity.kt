@@ -1,14 +1,17 @@
 package com.yc.eauxiliary
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.annotation.SuppressLint
+import android.animation.ValueAnimator
+import android.graphics.Rect
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.view.ViewAnimationUtils
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.animation.doOnEnd
+import androidx.core.view.isVisible
 
 class AnswerActivity : AppCompatActivity() {
 
@@ -18,13 +21,14 @@ class AnswerActivity : AppCompatActivity() {
     private var cx: Int = 0
     private var cy: Int = 0
     private var finalRadius: Float = 0f
+    private lateinit var answerContainer: FrameLayout // 用于动画的容器
 
-    @SuppressLint("MissingInflatedId")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_answer) // 先设置布局
 
-        setContentView(R.layout.activity_answer)
-
+        answerContainer = findViewById(R.id.answer_container) // 再查找 View
 
         rootView = findViewById(android.R.id.content)
         answerTextView = findViewById(R.id.answer_text_view)
@@ -34,34 +38,18 @@ class AnswerActivity : AppCompatActivity() {
 
         val title = intent.getStringExtra("TITLE") ?: "答案"
         pagetitle.text = title
-        pagetitle.text = "$title" // 显示标题和日期
 
         // 获取传递的数据
         val answers = intent.getStringExtra("ANSWERS") ?: ""
+        Log.d("AnswerActivity", "Intent extras: ${intent.extras}")
         cx = intent.getIntExtra("CX", 0)
         cy = intent.getIntExtra("CY", 0)
-
 
         // 设置答案文本
         answerTextView.text = answers
 
-        // 在 onLayout() 回调中启动进入动画，确保布局已经完成测量
-        rootView.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
-            override fun onLayoutChange(
-                v: View?,
-                left: Int,
-                top: Int,
-                right: Int,
-                bottom: Int,
-                oldLeft: Int,
-                oldTop: Int,
-                oldRight: Int,
-                oldBottom: Int
-            ) {
-                rootView.removeOnLayoutChangeListener(this)
-                startEnterAnimation()
-            }
-        })
+        // 在布局完成后启动进入动画
+        rootView.post { startEnterAnimation() }
 
         // 设置返回按钮点击事件
         val backButton: ImageView = findViewById(R.id.answer_back_button)
@@ -71,43 +59,77 @@ class AnswerActivity : AppCompatActivity() {
     }
 
     private fun startEnterAnimation() {
-        finalRadius = Math.hypot(rootView.width.toDouble(), rootView.height.toDouble()).toFloat()
-        val circularReveal = ViewAnimationUtils.createCircularReveal(
-            rootView,
-            cx,
-            cy,
-            0f,
-            finalRadius
-        )
-        circularReveal.duration = 600 // 动画时长
-        rootView.visibility = View.VISIBLE
-        circularReveal.start()
+        val left = intent.getIntExtra("CARD_VIEW_LEFT", 0)
+        val top = intent.getIntExtra("CARD_VIEW_TOP", 0)
+        val width = intent.getIntExtra("CARD_VIEW_WIDTH", 0)
+        val height = intent.getIntExtra("CARD_VIEW_HEIGHT", 0)
+
+        val cardRect = Rect(left, top, left + width, top + height)
+
+        // 设置初始布局参数
+        answerContainer.layoutParams = FrameLayout.LayoutParams(
+            cardRect.width(),
+            cardRect.height()
+        ).apply {
+            topMargin = cardRect.top
+            leftMargin = cardRect.left
+        }
+        answerContainer.isVisible = true
+
+        // 动画
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 200 // 动画时长
+
+            addUpdateListener { valueAnimator ->
+                val animatedValue = valueAnimator.animatedValue as Float
+                val newLayoutParams = answerContainer.layoutParams as FrameLayout.LayoutParams
+                newLayoutParams.width =
+                    (rootView.width * animatedValue + cardRect.width() * (1 - animatedValue)).toInt()
+                newLayoutParams.height =
+                    (rootView.height * animatedValue + cardRect.height() * (1 - animatedValue)).toInt()
+                newLayoutParams.topMargin = (cardRect.top * (1 - animatedValue)).toInt()
+                newLayoutParams.leftMargin = (cardRect.left * (1 - animatedValue)).toInt()
+                answerContainer.layoutParams = newLayoutParams
+            }
+
+            doOnEnd {
+                // 动画结束后将 answerContainer 的大小重置为 match_parent
+                answerContainer.layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        }.start()
     }
 
-    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        super.onBackPressed()
-        if (finalRadius == 0f) {
-            finalRadius =
-                Math.hypot(rootView.width.toDouble(), rootView.height.toDouble()).toFloat()
-        }
+        val left = intent.getIntExtra("CARD_VIEW_LEFT", 0)
+        val top = intent.getIntExtra("CARD_VIEW_TOP", 0)
+        val width = intent.getIntExtra("CARD_VIEW_WIDTH", 0)
+        val height = intent.getIntExtra("CARD_VIEW_HEIGHT", 0)
 
-        val circularReveal = ViewAnimationUtils.createCircularReveal(
-            rootView,
-            cx,
-            cy,
-            finalRadius,
-            0f
-        )
-        circularReveal.duration = 600 // 动画时长
-        circularReveal.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                rootView.visibility = View.INVISIBLE
-                super.onAnimationEnd(animation)
+        val cardRect = Rect(left, top, left + width, top + height)
+
+        ValueAnimator.ofFloat(1f, 0f).apply {
+            duration = 200 // 动画时长
+
+            addUpdateListener { valueAnimator ->
+                val animatedValue = valueAnimator.animatedValue as Float
+                val newLayoutParams = answerContainer.layoutParams as FrameLayout.LayoutParams
+                newLayoutParams.width =
+                    (rootView.width * animatedValue + cardRect.width() * (1 - animatedValue)).toInt()
+                newLayoutParams.height =
+                    (rootView.height * animatedValue + cardRect.height() * (1 - animatedValue)).toInt()
+                newLayoutParams.topMargin = (cardRect.top * (1 - animatedValue)).toInt()
+                newLayoutParams.leftMargin = (cardRect.left * (1 - animatedValue)).toInt()
+                answerContainer.layoutParams = newLayoutParams
+            }
+
+            doOnEnd {
                 finish()
                 overridePendingTransition(0, R.anim.fade_out)
+                super.onBackPressed() // 调用 super.onBackPressed()
             }
-        })
-        circularReveal.start()
+        }.start()
     }
 }

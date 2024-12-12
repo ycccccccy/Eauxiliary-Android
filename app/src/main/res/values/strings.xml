@@ -3,4 +3,7 @@
     <string name="fab_description">切换是否只显示一个答案</string>
     <string name="multiple_answers">多答案</string>
     <string name="single_answer">单答案</string>
+    <string name="folder_title">模拟试题 52</string>
+    <string name="folder_tag">高中/初中</string>
+    <string name="folder_download_time">2025-05-20 13:14</string>
 </resources>

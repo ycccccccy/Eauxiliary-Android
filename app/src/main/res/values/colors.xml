@@ -9,11 +9,14 @@
     <color name="colorWarning">#faf765</color> <!-- 深黄色 -->
     <color name="colorError">#ff6a4f</color> <!-- 深红色 -->
     <color name="colorSuccess">#75ff83</color> <!-- 深绿色 -->
+    <color name="gray">#808080</color>
+    <color name="light_gray">#888888</color>
 
     <color name="lightBackgroundStart">#2196F3</color>  <!-- 浅蓝色 -->
     <color name="lightBackgroundEnd">#FFFFFF</color>      <!-- 白色 -->
     <color name="lightBottomNav">#EEEEEE</color>      <!-- 浅灰色 -->
     <color name="darkBottomNav">#212121</color> <!-- 深灰色 -->
+    <color name="dark_gray">#121212</color>
 
     <color name="primaryColor">#87CEEB</color>
     <color name="primaryLightColor">#87CEFA</color>
@@ -27,6 +30,14 @@
 
     <color name="light_nav">#FFFFFF</color> <!-- 比深色背景略浅的颜色 -->
     <color name="dark_nav">#212121</color> <!-- 比深色背景略浅的颜色 -->
+
+    <color name="light_stroke_color">#87CEEB</color>
+    <color name="light_stroke_color_focused">#1976D2</color>
+    <color name="light_stroke_color_disabled">#808080</color>
+
+    <color name="dark_stroke_color">#87CEEB</color>
+    <color name="dark_stroke_color_focused">#1976D2</color>
+    <color name="dark_stroke_color_disabled">#808080</color>
 
 
 </resources>

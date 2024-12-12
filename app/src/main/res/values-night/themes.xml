@@ -1,7 +1,29 @@
 <resources>
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+
+    <style name="Base.Theme.ATETS" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialog</item>
+    </style>
+
+    <style name="Theme.ATETS" parent="Base.Theme.ATETS">
         <item name="android:colorBackground">@color/dark_background</item>
         <item name="android:selectableItemBackground">@color/dark_nav</item>
+        <item name="colorPrimary">#ADD8E6</item>
+        <item name="colorSecondary">#ADD8E6</item>
+        <item name="colorSurface">@color/dark_gray</item>
+        <item name="android:textColorPrimary">@color/white</item>
     </style>
+
+    <!-- 自定义 AlertDialog 样式 -->
+    <style name="CustomMaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <!-- 强制指定圆角 -->
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MyApp.Dialog.Rounded
+        </item>
+    </style>
+
+    <!-- 定义圆角样式 -->
+    <style name="ShapeAppearanceOverlay.MyApp.Dialog.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
 </resources>

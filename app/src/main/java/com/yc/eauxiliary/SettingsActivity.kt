@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.Settings
-import android.text.InputType
 import android.util.Base64
 import android.view.Gravity
 import android.view.View
@@ -107,6 +106,9 @@ class SettingsActivity : AppCompatActivity() {
 
         updateStatusBarTextColor(window)
 
+        findViewById<TextView>(R.id.homeButton).isSelected = false
+        findViewById<TextView>(R.id.settingsButton).isSelected = true
+
 
         switchSingleAnswerMode = findViewById(R.id.switchSingleAnswerMode)
         val isSingleAnswerMode = sharedPreferences.getBoolean("isSingleAnswerMode", false)
@@ -144,21 +146,19 @@ class SettingsActivity : AppCompatActivity() {
 
     //激活
     fun jihuo(view: View) {
-        // 创建输入框
-        val input = EditText(this)
-        input.inputType = InputType.TYPE_CLASS_TEXT
+        val dialogLayout = layoutInflater.inflate(R.layout.dialog_image_title_input, null)
+        val dialogImage = dialogLayout.findViewById<ImageView>(R.id.dialog_image)
+        val dialogTitle = dialogLayout.findViewById<TextView>(R.id.dialog_title)
+        val dialogInput = dialogLayout.findViewById<EditText>(R.id.dialog_input)
 
-        // 提示框
         MaterialAlertDialogBuilder(this)
-            .setTitle("激活")
-            .setMessage("输入激活码以激活完整功能")
-            .setView(input)
+            .setView(dialogLayout)
             .setPositiveButton("确定") { dialog, _ ->
                 dialog.dismiss()
-                val userInput = input.text.toString()
-                val username = getStudentName(this) // 获取用户名
+                val userInput = dialogInput.text.toString()
+                val username = getStudentName(this)
                 if (username != null && validateInput(userInput, this, username)) {
-                    SecureStorageUtils.setActivated(this, true) // 设置激活状态
+                    SecureStorageUtils.setActivated(this, true)
                     showCustomSnackbar(
                         "激活成功",
                         "success",

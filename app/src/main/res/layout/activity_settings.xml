@@ -224,7 +224,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="激活"
+                        android:text="成为赞助者"
                         android:textSize="16sp" />
                 </LinearLayout>
 
@@ -232,7 +232,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingTop="4dp"
-                    android:text="联系作者获取激活码以解锁完整功能"
+                    android:text="虽然不会解锁什么新功能，但是这对我很重要！"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="12sp" />
             </LinearLayout>

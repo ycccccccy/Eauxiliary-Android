@@ -6,8 +6,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/background"
     tools:context=".MainActivity">
-    <!-- 添加背景选择器 -->
-
 
     <!--顶部-->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -40,7 +38,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <LinearLayout
         android:id="@+id/contentLayout"
         android:layout_width="match_parent"
@@ -62,13 +59,11 @@
             android:layout_height="wrap_content"
             android:text="解析数据中 马上就好" />
 
-
         <FrameLayout
             android:id="@+id/recycler_view_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <!-- 使用 FrameLayout 包裹 RecyclerView -->
-
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/container"
@@ -79,8 +74,19 @@
 
         </FrameLayout>
 
-    </LinearLayout>
+        <!-- 新增的用于显示一言的 TextView，初始状态为 gone -->
+        <TextView
+            android:id="@+id/hitokoto_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="获取一言中..."
+            android:textSize="14sp"
+            android:visibility="gone" />
 
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/bottom_navigation"

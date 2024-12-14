@@ -80,6 +80,7 @@ val supabaseKey =
 val client = OkHttpClient()
 private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
+
 // 文件夹路径常量
 const val FOLDER_FILES = "files"
 const val FOLDER_DOWNLOAD = "Download"
@@ -146,6 +147,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var container: RecyclerView // 使用 RecyclerView 显示文件夹列表
     private lateinit var folderAdapter: FolderAdapter // 文件夹列表适配器
     private lateinit var recyclerViewContainer: FrameLayout // FrameLayout 容器
+    private lateinit var hitokotoTextView: TextView
 
     // 数据和状态
     private var directoryUri: Uri? = null
@@ -234,6 +236,7 @@ class MainActivity : AppCompatActivity() {
         textView = findViewById(R.id.textView)
         container = findViewById(R.id.container)
         recyclerViewContainer = findViewById(R.id.recycler_view_container)
+        hitokotoTextView = findViewById(R.id.hitokoto_text_view)
 
         // 设置 RecyclerView 的布局管理器和适配器
         container.layoutManager = LinearLayoutManager(this)
@@ -241,6 +244,17 @@ class MainActivity : AppCompatActivity() {
             onFolderClick(group, cardView) // 正确的参数
         }
         container.adapter = folderAdapter
+
+        // 点击一言时重新获取
+        hitokotoTextView = findViewById(R.id.hitokoto_text_view)
+        hitokotoTextView.setOnClickListener {
+            hitokotoTextView.isEnabled = false // 禁用点击
+            fetchHitokoto()
+            // 1 秒后重新启用点击
+            hitokotoTextView.postDelayed({
+                hitokotoTextView.isEnabled = true
+            }, 1000)
+        }
 
         backArrow.setOnClickListener { onBackArrowClick() }
     }
@@ -284,6 +298,54 @@ class MainActivity : AppCompatActivity() {
                 REQUEST_CODE_DOCUMENT_TREE -> {
                     // 处理 Document Tree URI 请求结果
                     handleDocumentTreeUriResult(resultData)
+                }
+            }
+        }
+    }
+
+    // 一言 API服务 --主页卡片列表下方的随机文案
+    private fun fetchHitokoto() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("https://v1.hitokoto.cn/") // 一言 API
+                    .build()
+
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
+
+                if (response.isSuccessful && responseBody != null) {
+                    val jsonObject = JSONObject(responseBody)
+                    val hitokoto = jsonObject.getString("hitokoto")
+                    val from = jsonObject.getString("from")
+                    val fromWho = jsonObject.optString("from_who", "")
+
+                    // 详细格式
+                    val hitokotoText = buildString {
+                        append(hitokoto)
+                        append("\n") // 在文案后添加换行符
+                        append("  -- ")
+                        if (fromWho.isNotEmpty()) {
+                            append(fromWho) // 作者不加「」
+                            append(" ") // 作者和出处之间加空格
+                        }
+                        append("「$from」") // 出处加「」
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        hitokotoTextView.text = hitokotoText
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        hitokotoTextView.text =
+                            "用代码表达言语的魅力，用代码书写山河的壮丽" + "\n" + "「一言获取失败」"
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "获取一言失败: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    hitokotoTextView.text =
+                        "用代码表达言语的魅力，用代码书写山河的壮丽。" + "\n" + "「一言获取失败」"
                 }
             }
         }
@@ -557,6 +619,12 @@ class MainActivity : AppCompatActivity() {
                         // 标记题库类型并更新文件夹列表适配器
                         val markedGroups = markAndFilterGroups(displayGroups)
                         folderAdapter.updateData(markedGroups) // 更新适配器的数据
+
+                        // 显示一言 TextView
+                        hitokotoTextView.visibility = View.VISIBLE
+
+                        // 获取并显示一言
+                        fetchHitokoto()
 
                         progressBar.visibility = View.GONE // 隐藏 ProgressBar
                         updateScanningProgress(100, "扫描完成!") // 更新进度到 100%

@@ -2,6 +2,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.yc.eauxiliary.KEY_DIRECTORY_URI
@@ -30,6 +32,7 @@ class DirectoryFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_directory, container, false)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -42,14 +45,15 @@ class DirectoryFragment : Fragment() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun requestDocumentTreeUri() {
         val uriBuilder = Uri.Builder()
             .scheme("content")
             .authority("com.android.externalstorage.documents")
             .appendPath("tree")
-            .appendPath("primary:A\\u200Bndroid/data")
+            .appendPath("primary:A\u200Bndroid/data")
             .appendPath("document")
-            .appendPath("primary:A\\u200Bndroid/data/com.ets100.secondary")
+            .appendPath("primary:A\u200Bndroid/data/com.ets100.secondary")
         directoryUri = uriBuilder.build()
 
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)

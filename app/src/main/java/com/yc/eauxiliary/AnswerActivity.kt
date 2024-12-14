@@ -20,7 +20,6 @@ class AnswerActivity : AppCompatActivity() {
     private lateinit var pagetitle: TextView
     private var cx: Int = 0
     private var cy: Int = 0
-    private var finalRadius: Float = 0f
     private lateinit var answerContainer: FrameLayout // 用于动画的容器
 
 
@@ -102,6 +101,7 @@ class AnswerActivity : AppCompatActivity() {
         }.start()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         val left = intent.getIntExtra("CARD_VIEW_LEFT", 0)
         val top = intent.getIntExtra("CARD_VIEW_TOP", 0)

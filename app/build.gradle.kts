@@ -28,7 +28,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "4.0.1"
+        versionName = "4.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         val buildTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
         resValue("string", "build_time", buildTime)

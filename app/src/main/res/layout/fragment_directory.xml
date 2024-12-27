@@ -13,14 +13,14 @@
         android:layout_marginBottom="10dp"
         android:gravity="start"
         android:text="目录授权"
-        android:textSize="16sp"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="1.点击下方按键后将自动导航至目标目录进行授权\n2.确认导航到的目录是com.ets100.ETS_secondary后点击界面下方的 '使用此文件夹' 并且在弹出的新窗口内点击 '允许' 即可完成授权"
+        android:text="点击下方按键后会自动构建目标路径，如果无法构建则代表你无法使用本工具获取答案"
         android:textSize="16sp" />
 
     <TextView
@@ -42,7 +42,7 @@
         style="@style/Widget.MaterialComponents.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="选择目录"
+        android:text="开始"
         app:backgroundTint="?attr/colorPrimary"
         app:cornerRadius="10dp" />
 

@@ -1,17 +1,11 @@
 package com.yc.eauxiliary
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.DocumentsContract
-import android.provider.Settings
 import android.util.Base64
 import android.view.Gravity
 import android.view.View
@@ -20,10 +14,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Switch
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -195,54 +186,6 @@ class SettingsActivity : AppCompatActivity() {
         return input.trim() == encryptedUsername.trim()
     }
 
-
-    //重新授权
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun chongxinshouquan(view: View) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                val uri = Uri.fromParts("package", packageName, null)
-                intent.data = uri
-                startActivity(intent)
-            } else {
-
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ),
-                    1
-                )
-            } else {
-
-            }
-        }
-
-        val uriBuilder = Uri.Builder()
-            .scheme("content")
-            .authority("com.android.externalstorage.documents")
-            .appendPath("tree")
-            .appendPath("primary:A\u200Bndroid/data")
-            .appendPath("document")
-            .appendPath("primary:A\u200Bndroid/data/com.ets100.secondary")
-        directoryUri = uriBuilder.build()
-
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, directoryUri)
-        startActivityForResult(intent, REQUEST_CODE)
-    }
 
     private fun fetchDataAndUpdateUI() {
         Thread {

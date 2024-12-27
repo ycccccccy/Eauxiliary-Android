@@ -18,11 +18,8 @@ import android.os.Environment
 import android.transition.TransitionInflater
 import android.util.Log
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.Window
-import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -32,7 +29,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.FileProvider
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -59,8 +55,6 @@ import org.jsoup.Jsoup
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
-
 
 // 常量定义
 const val REQUEST_CODE_STORAGE = 1
@@ -80,13 +74,18 @@ val supabaseKey =
 val client = OkHttpClient()
 private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-
-// 文件夹路径常量
-const val FOLDER_FILES = "files"
-const val FOLDER_DOWNLOAD = "Download"
-const val FOLDER_ETS_SECONDARY = "ETS_SECONDARY"
+// 文件夹路径常量 (修改为使用 File 路径)
+private const val FOLDER_FILES = "files"
+private const val FOLDER_DOWNLOAD = "Download"
+private const val FOLDER_ETS_SECONDARY = "ETS_SECONDARY"
 private const val FOLDER_RESOURCE = "resource"
 private const val FOLDER_TEMP = "temp"
+
+// 零宽空格
+private const val ZERO_WIDTH_SPACE = "\u200B"
+
+// 根目录路径 (新增)
+private var rootDirectoryPath: String? = null
 
 // 用户类型枚举
 private enum class UserType {
@@ -136,7 +135,6 @@ fun updateStatusBarTextColor(window: Window) {
     }
 }
 
-
 // 主活动类
 class MainActivity : AppCompatActivity() {
     // UI 元素
@@ -150,7 +148,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var hitokotoTextView: TextView
 
     // 数据和状态
-    private var directoryUri: Uri? = null
     private var isSingleAnswerMode = false
     private var currentSnackbar: Snackbar? = null
     private var isSnackbarShowing = false
@@ -205,7 +202,6 @@ class MainActivity : AppCompatActivity() {
         window.exitTransition =
             TransitionInflater.from(this).inflateTransition(R.transition.circular_reveal_exit)
 
-
         // 首次运行检查
         val firstRunCheck = FirstRunCheck(this)
         if (firstRunCheck.isFirstRun()) {
@@ -222,7 +218,6 @@ class MainActivity : AppCompatActivity() {
                 "在这里写白名单"
             )
         ) //  白名单用户
-
 
         // 设置为非首次运行
         firstRunCheck.setNotFirstRun()
@@ -264,21 +259,15 @@ class MainActivity : AppCompatActivity() {
         return sharedPrefs.getBoolean("hasReadPrivacyPolicy", false)
     }
 
-
-    // 加载设置
+    // 加载设置 (修改为加载 rootDirectoryPath)
     private fun loadSettings() {
         val mainPreferences = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
         isSingleAnswerMode = mainPreferences.getBoolean(KEY_IS_SINGLE_ANSWER_MODE, false)
-        val uriString = mainPreferences.getString(KEY_DIRECTORY_URI, null)
-        if (uriString != null) {
-            directoryUri = Uri.parse(uriString)
-        } else {
-            // 处理 uriString 为 null 的情况
-            directoryUri = null
-        }
+        // 从 SharedPreferences 中读取根目录路径
+        rootDirectoryPath = mainPreferences.getString(KEY_DIRECTORY_URI, null)
     }
 
-    // 预加载学生姓名和用户类型
+    // 预加载学生姓名和用户类型 (修改为使用 File)
     private fun loadStudentData() {
         studentName = getStudentName()
         userType = getUserType(studentName)
@@ -293,11 +282,6 @@ class MainActivity : AppCompatActivity() {
             when (requestCode) {
                 REQUEST_CODE_STORAGE -> {
                     // 处理存储权限请求结果
-                }
-
-                REQUEST_CODE_DOCUMENT_TREE -> {
-                    // 处理 Document Tree URI 请求结果
-                    handleDocumentTreeUriResult(resultData)
                 }
             }
         }
@@ -349,28 +333,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    // 处理 Document Tree URI 请求结果
-    private fun handleDocumentTreeUriResult(resultData: Intent?) {
-        directoryUri = resultData?.data
-
-        // 修改为永久请求
-        val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        directoryUri?.let {
-            contentResolver.takePersistableUriPermission(it, takeFlags)
-
-            // 保存 URI
-            val sharedPreferences = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
-            val editor = sharedPreferences.edit()
-            editor.putString(KEY_DIRECTORY_URI, it.toString())
-            editor.apply()
-            fetchFoldersAndUpdateUI()
-        }
-
-        // 显示隐私协议对话框
-        showEULADialog()
     }
 
     // 显示隐私协议对话框
@@ -457,7 +419,6 @@ class MainActivity : AppCompatActivity() {
                                 buildJsonArray { add(JsonPrimitive(student)) }) // 直接构建 JsonArray
                         }.toString()
 
-
                         val insertRequest = Request.Builder()
                             .url(insertUrl)
                             .addHeader("apikey", supabaseKey)
@@ -468,7 +429,6 @@ class MainActivity : AppCompatActivity() {
 
                         client.newCall(insertRequest).execute()
                     }
-
 
                 } else {
                     // 处理查询/上传/更新失败的情况
@@ -500,37 +460,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 获取学生姓名
+    // 获取学生姓名 (修改为使用 File)
     private fun getStudentName(): String? {
         var studentName: String? = null
         val sharedPreferences = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
         studentName = sharedPreferences.getString(KEY_STUDENT_NAME, null)
         if (studentName == null) {
-            // 逐级查找目标文件夹
-            var currentDirectory = directoryUri?.let { DocumentFile.fromTreeUri(this, it) }
+            // 使用 File 对象逐级构建目标文件夹路径
+            var currentDirectory = rootDirectoryPath?.let { File(it) }
             val targetPath =
                 listOf(FOLDER_FILES, FOLDER_DOWNLOAD, FOLDER_ETS_SECONDARY, FOLDER_TEMP)
             for (folderName in targetPath) {
-                currentDirectory = currentDirectory?.findFile(folderName)
-                if (currentDirectory == null) {
+                currentDirectory = currentDirectory?.let { File(it, folderName) }
+                if (currentDirectory?.exists() != true) {
+                    currentDirectory = null
                     break
                 }
             }
 
             // 读取文件中的学生姓名
-            val files = currentDirectory?.listFiles()
-            if (files != null && files.isNotEmpty()) {
-                val file = files[0]
-                if (file.exists()) {
-                    try {
-                        val inputStream = contentResolver.openInputStream(file.uri)
-                        val data = JSONObject(inputStream?.bufferedReader().use { it?.readText() })
-                        studentName =
-                            data.getJSONArray("data").getJSONObject(0).getString("student_name")
-                        saveStudentName(studentName) // 保存到 SharedPreferences
-                    } catch (e: Exception) {
-                        // 处理异常
-                        Log.e(TAG, "获取学生姓名时发生错误: ${e.message}")
+            currentDirectory?.let { dir ->
+                val files = dir.listFiles()
+                if (files != null && files.isNotEmpty()) {
+                    val file = files[0]
+                    if (file.exists()) {
+                        try {
+                            val data = JSONObject(file.readText())
+                            studentName =
+                                data.getJSONArray("data").getJSONObject(0).getString("student_name")
+                            saveStudentName(studentName!!) // 保存到 SharedPreferences
+                        } catch (e: Exception) {
+                            // 处理异常
+                            Log.e(TAG, "获取学生姓名时发生错误: ${e.message}")
+                        }
                     }
                 }
             }
@@ -557,7 +519,7 @@ class MainActivity : AppCompatActivity() {
         this.studentName = studentName
     }
 
-    // 获取文件夹数据并更新UI
+    // 获取文件夹数据并更新UI (修改为使用 File)
     private fun fetchFoldersAndUpdateUI() {
         // 检查是否已阅读隐私协议
         if (!hasReadPrivacyPolicy()) {
@@ -580,7 +542,8 @@ class MainActivity : AppCompatActivity() {
                     val folders =
                         withContext(Dispatchers.IO) { getSortedResourceFolders(resourceFolder) }
 
-                    val groupedFolders = groupResourceFoldersByTime(folders) // 在主线程中执行分组
+                    val groupedFolders =
+                        groupResourceFoldersByTime(folders) // 在主线程中执行分组, 现在返回 List<List<File>>
 
                     // 在主线程中更新UI
                     withContext(Dispatchers.Main) {
@@ -614,11 +577,15 @@ class MainActivity : AppCompatActivity() {
 
                         // 根据用户类型和激活状态过滤文件夹组
                         val displayGroups =
-                            filterFolderGroups(groupedFolders, isActivated) // 传递 isActivated
+                            filterFolderGroups(
+                                groupedFolders,
+                                isActivated
+                            ) // 传递 isActivated, 现在参数是 List<List<File>>
 
                         // 标记题库类型并更新文件夹列表适配器
-                        val markedGroups = markAndFilterGroups(displayGroups)
-                        folderAdapter.updateData(markedGroups) // 更新适配器的数据
+                        val markedGroups =
+                            markAndFilterGroups(displayGroups) // 现在返回 List<Pair<List<File>, String>>
+                        folderAdapter.updateData(markedGroups) // 更新适配器的数据, 现在参数是 List<Pair<List<File>, String>>
 
                         // 显示一言 TextView
                         hitokotoTextView.visibility = View.VISIBLE
@@ -654,12 +621,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     // 过滤文件夹组
     private fun filterFolderGroups(
-        groupedFolders: List<List<DocumentFile>>,
+        groupedFolders: List<List<File>>,
         isActivated: Boolean
-    ): List<List<DocumentFile>> {
+    ): List<List<File>> {
         return when {
             userType == UserType.WHITELIST -> groupedFolders
             userType == UserType.NORMAL && isActivated -> groupedFolders // 使用 isActivated 参数
@@ -667,32 +633,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 查找资源文件夹
-    private fun findResourceFolder(): DocumentFile? {
-        var currentDirectory = directoryUri?.let { DocumentFile.fromTreeUri(this, it) }
+    // 查找资源文件夹 (修改为使用 File)
+    private fun findResourceFolder(): File? {
+        var currentDirectory = rootDirectoryPath?.let { File(it) }
         val targetPath =
             listOf(FOLDER_FILES, FOLDER_DOWNLOAD, FOLDER_ETS_SECONDARY, FOLDER_RESOURCE)
         for (folderName in targetPath) {
-            currentDirectory = currentDirectory?.findFile(folderName)
-            if (currentDirectory == null) {
+            currentDirectory = currentDirectory?.let { File(it, folderName) }
+            if (currentDirectory == null || !currentDirectory.exists()) {
                 return null
             }
         }
         return currentDirectory
     }
 
-    // 获取排序后的资源文件夹列表
-    private fun getSortedResourceFolders(resourceFolder: DocumentFile): List<DocumentFile> {
+    // 获取排序后的资源文件夹列表 (修改为使用 File)
+    private fun getSortedResourceFolders(resourceFolder: File): List<File> {
         return resourceFolder.listFiles()
-            .filter {
+            ?.filter {
                 it.isDirectory && it.name != "common" && it.listFiles()
-                    .any { it.name == "content.json" }
+                    ?.any { it.name == "content.json" } == true
             } // 添加过滤条件
-            .sortedByDescending { it.lastModified() }
+            ?.sortedByDescending { it.lastModified() } ?: emptyList()
     }
 
-    // 标记题库类型并更新文件夹列表适配器
-    private fun markAndFilterGroups(groupedFolders: List<List<DocumentFile>>): List<Pair<List<DocumentFile>, String>> { // 修改返回值类型
+    // 标记题库类型并更新文件夹列表适配器 (修改为返回 List<Pair<List<File>, String>>)
+    private fun markAndFilterGroups(groupedFolders: List<List<File>>): List<Pair<List<File>, String>> {
         return groupedFolders.map { group ->
             val tag = if (group.size == 3) "高中" else if (group.size == 7) "初中" else "未知"
             Pair(group, tag) // 返回 Pair，包含文件夹组和标签
@@ -700,10 +666,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     // 按时间分组资源文件夹 (在主线程中执行)
-    private suspend fun groupResourceFoldersByTime(folders: List<DocumentFile>): List<List<DocumentFile>> {
+    private suspend fun groupResourceFoldersByTime(folders: List<File>): List<List<File>> {
         return withContext(Dispatchers.Main) {
-            val groupedFolders = mutableListOf<List<DocumentFile>>()
-            var tempGroup = mutableListOf<DocumentFile>()
+            val groupedFolders = mutableListOf<List<File>>()
+            var tempGroup = mutableListOf<File>()
 
             for (i in folders.indices) {
                 val currentFolder = folders[i]
@@ -734,8 +700,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun splitGroupByType(group: List<DocumentFile>): List<List<DocumentFile>> {
-        val result = mutableListOf<List<DocumentFile>>()
+    private fun splitGroupByType(group: List<File>): List<List<File>> {
+        val result = mutableListOf<List<File>>()
         when {
             group.size % 3 == 0 -> {  // 高中
                 for (i in group.indices step 3) {
@@ -756,7 +722,7 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private fun onFolderClick(group: List<DocumentFile>, cardView: View) {
+    private fun onFolderClick(group: List<File>, cardView: View) {
         val answers = getAnswersFromFolderGroup(group)
 
         updateScanningProgress(0, " ")
@@ -784,8 +750,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //读取答案数据
-    private fun getAnswersFromFolderGroup(group: List<DocumentFile>): String {
+    //读取答案数据 (修改为使用 File)
+    private fun getAnswersFromFolderGroup(group: List<File>): String {
         val listeningChoiceBuilder = StringBuilder()
         val answeringQuestionsBuilder = StringBuilder()
         val storyBuilder = StringBuilder()
@@ -794,41 +760,40 @@ class MainActivity : AppCompatActivity() {
 
         updateScanningProgress(0, "开始读取答案...")
 
+        // 现在 getCachedAnswers 和 cacheAnswers 的参数是 List<File>
         val cachedAnswers = SecureStorageUtils.getCachedAnswers(this, group)
         if (cachedAnswers != null) {
             return cachedAnswers // 如果缓存存在，直接返回缓存的答案
         }
 
-        val totalFiles = group.sumOf { it.listFiles().size }
+        val totalFiles = group.sumOf { it.listFiles()?.size ?: 0 }
         var processedFiles = 0
 
         for (folder in group) {
-            for (file in folder.listFiles()) {
+            folder.listFiles()?.forEach { file ->
                 if (file.name == "content.json") {
                     try {
-                        contentResolver.openInputStream(file.uri)?.use { inputStream ->
-                            val data = inputStream.bufferedReader().use { it.readText() }
-                            val jsonData = JSONObject(data)
+                        val data = file.readText()
+                        val jsonData = JSONObject(data)
 
-                            when (jsonData.getString("structure_type")) {
-                                "collector.role" -> { // 初中
-                                    questionBuilder.append(parseQuestionData(jsonData, false))
-                                }
+                        when (jsonData.getString("structure_type")) {
+                            "collector.role" -> { // 初中
+                                questionBuilder.append(parseQuestionData(jsonData, false))
+                            }
 
-                                "collector.3q5a" -> { // 高中
-                                    questionBuilder.append(parseQuestionData(jsonData, true))
-                                }
+                            "collector.3q5a" -> { // 高中
+                                questionBuilder.append(parseQuestionData(jsonData, true))
+                            }
 
-                                "collector.picture" -> {
-                                    storyBuilder.append(parseStoryData(jsonData))
-                                }
+                            "collector.picture" -> {
+                                storyBuilder.append(parseStoryData(jsonData))
+                            }
 
-                                else -> {
-                                    Log.e(
-                                        "AnswerActivity",
-                                        "未知的 structure_type: ${jsonData.getString("structure_type")}"
-                                    )
-                                }
+                            else -> {
+                                Log.e(
+                                    "AnswerActivity",
+                                    "未知的 structure_type: ${jsonData.getString("structure_type")}"
+                                )
                             }
                         }
 
@@ -854,13 +819,13 @@ class MainActivity : AppCompatActivity() {
                 storyBuilder.toString() +
                 askingQuestionsBuilder.toString()
 
+        // 现在 getCachedAnswers 和 cacheAnswers 的参数是 List<File>
         SecureStorageUtils.cacheAnswers(this, group, combinedAnswers)
 
         updateScanningProgress(100, "解析完成!")
 
         return combinedAnswers
     }
-
 
     private fun parseQuestionData(data: JSONObject, isHighSchool: Boolean): String {
         val builder = StringBuilder()
@@ -870,7 +835,6 @@ class MainActivity : AppCompatActivity() {
         for (j in 0 until questions.length()) {
             val question = questions.getJSONObject(j)
             val stdAnswers = question.getJSONArray("std")
-
 
             if (isHighSchool) { // 高中
                 builder.appendLine("角色扮演 ${j + 1}:\n\n") //
@@ -898,12 +862,11 @@ class MainActivity : AppCompatActivity() {
                 builder.append("${k + 1}. $plainText\n\n")
                 if (isSingleAnswerMode) break
             }
-            builder.append("\n") 
+            builder.append("\n")
         }
 
         return builder.toString()
     }
-
 
     // 解析问题，去除HTML标签和多余的换行符
     private fun parseQuestion(questionText: String): String {
@@ -914,7 +877,6 @@ class MainActivity : AppCompatActivity() {
             .replace("\n", "") // 去除所有换行符
             .trim() // 去除首尾空格
     }
-
 
     // 解析短文数据
     private fun parseStoryData(data: JSONObject): String {
@@ -986,7 +948,6 @@ class MainActivity : AppCompatActivity() {
     private fun removeHtmlTags(text: String): String {
         return text.replace(Regex("<.*?>"), "")
     }
-
 
     // 底部导航栏点击事件：设置
     fun onSettingsClick(view: View) {
@@ -1175,74 +1136,5 @@ class MainActivity : AppCompatActivity() {
             textView.text = "$message"
             progressBar.progress = progress // 更新 ProgressBar 的进度
         }
-    }
-}
-
-// 文件夹列表适配器
-class FolderAdapter(
-    private val context: Context,
-    private val onFolderClick: (group: List<DocumentFile>, cardView: View) -> Unit // 修改参数类型
-) : RecyclerView.Adapter<FolderAdapter.ViewHolder>() {
-
-    private val folderGroups = mutableListOf<Pair<List<DocumentFile>, String>>()
-    private val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault())
-
-    fun updateData(newFolderGroups: List<Pair<List<DocumentFile>, String>>) { // 修改参数类型
-        folderGroups.clear()
-        folderGroups.addAll(newFolderGroups)
-        notifyDataSetChanged()
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_folder_group, parent, false)
-        return ViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val group = folderGroups[position]
-        holder.bind(group, position)
-    }
-
-    override fun getItemCount(): Int {
-        return folderGroups.size
-    }
-
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val buttonLayout: LinearLayout = itemView.findViewById(R.id.button_layout)
-        private val titleTextView: TextView = itemView.findViewById(R.id.title_text_view)
-        private val timeTextView: TextView = itemView.findViewById(R.id.time_text_view)
-        private val tagTextView: TextView =
-            itemView.findViewById(R.id.tag_text_view) // 添加标签 TextView
-
-        fun bind(group: Pair<List<DocumentFile>, String>, position: Int) {
-            val (folders, tag) = group // 解构 Pair
-            val folderName = folders[0].name?.substring(0, 6) ?: "文件夹"
-            titleTextView.text = "模考 $folderName "
-            timeTextView.text = "时间:${sdf.format(Date(folders[0].lastModified()))}"
-            tagTextView.text = tag // 设置标签
-
-
-            buttonLayout.setOnClickListener {
-                // 获取被点击的按钮
-                val buttonView = it as View
-
-                // 获取按钮在屏幕中的坐标
-                val buttonLocation = IntArray(2)
-                buttonView.getLocationOnScreen(buttonLocation)
-
-                // 将 buttonLayout 作为 cardView 参数传递
-                onFolderClick(group.first, it) // 将 buttonLayout 本身作为 cardView 参数传递
-            }
-
-            // 添加淡入动画
-            val fadeInAnimation = AlphaAnimation(0f, 1f).apply {
-                duration = 100 // 动画持续时间
-                startOffset = position * 50L // 设置每个按钮的动画延迟
-                fillAfter = true // 动画结束后保持最终状态
-            }
-            buttonLayout.startAnimation(fadeInAnimation)
-        }
-
     }
 }

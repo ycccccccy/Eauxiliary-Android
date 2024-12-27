@@ -138,38 +138,6 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <!-- 使用手册选项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:onClick="chongxinshouquan"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="授权"
-                        android:textSize="16sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="4dp"
-                    android:text="解决部分用户第一次授权失误的问题"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="12sp" />
-            </LinearLayout>
 
             <!-- 清除缓存 -->
             <LinearLayout

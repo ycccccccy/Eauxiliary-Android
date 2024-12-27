@@ -1,10 +1,8 @@
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.DocumentsContract
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,12 +15,14 @@ import com.yc.eauxiliary.KEY_DIRECTORY_URI
 import com.yc.eauxiliary.MainActivity
 import com.yc.eauxiliary.R
 import com.yc.eauxiliary.SHARED_PREFS_NAME
+import java.io.File
 
 class DirectoryFragment : Fragment() {
 
     private var directoryUri: Uri? = null
     private val REQUEST_CODE_DOCUMENT_TREE = 2
-
+    private val TARGET_PACKAGE_NAME = "com.ets100.secondary"
+    private val ZERO_WIDTH_SPACE = "\u200B"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,72 +36,50 @@ class DirectoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         view.findViewById<Button>(R.id.select_directory_button).setOnClickListener {
-            requestDocumentTreeUri()
-        }
-
-
-    }
-
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun requestDocumentTreeUri() {
-        val uriBuilder = Uri.Builder()
-            .scheme("content")
-            .authority("com.android.externalstorage.documents")
-            .appendPath("tree")
-            .appendPath("primary:A\u200Bndroid/data")
-            .appendPath("document")
-            .appendPath("primary:A\u200Bndroid/data/com.ets100.secondary")
-        directoryUri = uriBuilder.build()
-
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, directoryUri)
-        startActivityForResult(intent, REQUEST_CODE_DOCUMENT_TREE)
-
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
-        super.onActivityResult(requestCode, resultCode, resultData)
-        if (requestCode == REQUEST_CODE_DOCUMENT_TREE && resultCode == Activity.RESULT_OK) {
-
-            // 处理 Document Tree URI 请求结果
-            handleDocumentTreeUriResult(resultData)
-
-
+            // 使用 File 的方式获取路径
+            val targetDirectoryPath = getTargetPathWithWorkaround()
+            if (targetDirectoryPath != null) {
+                saveDirectoryPathAndStartMainActivity(targetDirectoryPath)
+            } else {
+                // 处理无法获取路径的情况，例如可以提示用户
+                view.findViewById<TextView>(R.id.selected_directory_textview).apply {
+                    visibility = View.VISIBLE
+                    text = "无法获取目标路径，请手动选择或检查权限"
+                }
+            }
         }
     }
 
+    private fun getTargetPathWithWorkaround(): String? {
+        // 尝试直接构建路径
+        val directPath =
+            "${Environment.getExternalStorageDirectory().absolutePath}/A${ZERO_WIDTH_SPACE}ndroid/data/$TARGET_PACKAGE_NAME"
+        if (File(directPath).exists()) {
+            return directPath
+        }
+        return null
+    }
 
-    @SuppressLint("SetTextI18n")
-    private fun handleDocumentTreeUriResult(resultData: Intent?) {
-        directoryUri = resultData?.data
+    private fun saveDirectoryPathAndStartMainActivity(path: String) {
+        // 保存路径到 SharedPreferences
+        val sharedPreferences = requireContext().getSharedPreferences(
+            SHARED_PREFS_NAME,
+            AppCompatActivity.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        editor.putString(KEY_DIRECTORY_URI, path)
+        editor.apply()
 
+        // 显示已选择的目录路径
         view?.findViewById<TextView>(R.id.selected_directory_textview)?.apply {
             visibility = View.VISIBLE
-            text = "已选择目录: ${directoryUri?.path}"
+            text = "已选择目录: $path"
         }
 
-        // 修改为永久请求
-        val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        directoryUri?.let {
-            requireContext().contentResolver.takePersistableUriPermission(it, takeFlags)
-
-            // 保存 URI
-            val sharedPreferences = requireContext().getSharedPreferences(
-                SHARED_PREFS_NAME,
-                AppCompatActivity.MODE_PRIVATE
-            )
-            val editor = sharedPreferences.edit()
-            editor.putString(KEY_DIRECTORY_URI, it.toString())
-            editor.apply()
-        }
+        // 启动 MainActivity
         startMainActivity()
     }
-
 
     // 启动MainActivity并结束OnboardingActivity
     private fun startMainActivity() {
@@ -109,5 +87,4 @@ class DirectoryFragment : Fragment() {
         startActivity(intent)
         requireActivity().finish()
     }
-
 }

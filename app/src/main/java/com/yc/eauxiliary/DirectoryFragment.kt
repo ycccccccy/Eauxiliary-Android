@@ -1,12 +1,13 @@
+
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -19,10 +20,9 @@ import java.io.File
 
 class DirectoryFragment : Fragment() {
 
-    private var directoryUri: Uri? = null
-    private val REQUEST_CODE_DOCUMENT_TREE = 2
     private val TARGET_PACKAGE_NAME = "com.ets100.secondary"
     private val ZERO_WIDTH_SPACE = "\u200B"
+    private lateinit var resultTextView: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,52 +36,56 @@ class DirectoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<Button>(R.id.select_directory_button).setOnClickListener {
-            // 使用 File 的方式获取路径
-            val targetDirectoryPath = getTargetPathWithWorkaround()
-            if (targetDirectoryPath != null) {
-                saveDirectoryPathAndStartMainActivity(targetDirectoryPath)
-            } else {
-                // 处理无法获取路径的情况，例如可以提示用户
-                view.findViewById<TextView>(R.id.selected_directory_textview).apply {
-                    visibility = View.VISIBLE
-                    text = "无法获取目标路径，请手动选择或检查权限"
-                }
-            }
+        resultTextView = view.findViewById(R.id.selected_directory_textview)
+        resultTextView.visibility = View.VISIBLE
+        resultTextView.text = "正在自动进行环境准备..."
+
+        // 使用 Handler 延迟执行构建目录操作
+        Handler(Looper.getMainLooper()).post {
+            buildDirectoryInBackground()
+        }
+    }
+
+    private fun buildDirectoryInBackground() {
+        val targetDirectoryPath = getTargetPathWithWorkaround()
+        if (targetDirectoryPath != null) {
+            saveDirectoryPath(targetDirectoryPath)
+            showSuccessAndNavigate(targetDirectoryPath)
+        } else {
+            showFailureMessage()
         }
     }
 
     private fun getTargetPathWithWorkaround(): String? {
-        // 尝试直接构建路径
         val directPath =
             "${Environment.getExternalStorageDirectory().absolutePath}/A${ZERO_WIDTH_SPACE}ndroid/data/$TARGET_PACKAGE_NAME"
-        if (File(directPath).exists()) {
-            return directPath
-        }
-        return null
+        return if (File(directPath).exists()) directPath else null
     }
 
-    private fun saveDirectoryPathAndStartMainActivity(path: String) {
-        // 保存路径到 SharedPreferences
+    private fun saveDirectoryPath(path: String) {
         val sharedPreferences = requireContext().getSharedPreferences(
             SHARED_PREFS_NAME,
             AppCompatActivity.MODE_PRIVATE
         )
-        val editor = sharedPreferences.edit()
-        editor.putString(KEY_DIRECTORY_URI, path)
-        editor.apply()
-
-        // 显示已选择的目录路径
-        view?.findViewById<TextView>(R.id.selected_directory_textview)?.apply {
-            visibility = View.VISIBLE
-            text = "已选择目录: $path"
-        }
-
-        // 启动 MainActivity
-        startMainActivity()
+        sharedPreferences.edit().putString(KEY_DIRECTORY_URI, path).apply()
     }
 
-    // 启动MainActivity并结束OnboardingActivity
+    private fun showSuccessAndNavigate(path: String) {
+        requireActivity().runOnUiThread {
+            resultTextView.text = "我们已完成了环境准备\n\n3秒后自动前往主界面"
+            // 3 秒后跳转到 MainActivity
+            Handler(Looper.getMainLooper()).postDelayed({
+                startMainActivity()
+            }, 3000)
+        }
+    }
+
+    private fun showFailureMessage() {
+        requireActivity().runOnUiThread {
+            resultTextView.text = "无法自动构建目录，可能是权限不足或设备不支持。"
+        }
+    }
+
     private fun startMainActivity() {
         val intent = Intent(requireContext(), MainActivity::class.java)
         startActivity(intent)

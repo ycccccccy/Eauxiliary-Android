@@ -2,7 +2,9 @@ package com.yc.eauxiliary
 
 import DirectoryFragment
 import PermissionFragment
+import android.os.Build
 import android.os.Bundle
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -13,11 +15,15 @@ import com.google.android.material.tabs.TabLayoutMediator
 
 class OnboardingActivity : AppCompatActivity() {
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
         updateStatusBarTextColor(window)
+
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
 
         val viewPager = findViewById<ViewPager2>(R.id.view_pager)
         val pagerAdapter = ScreenSlidePagerAdapter(this)
@@ -27,8 +33,8 @@ class OnboardingActivity : AppCompatActivity() {
         val tabLayout = findViewById<TabLayout>(R.id.tab_layout) // 如果有TabLayout
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {
-                0 -> tab.text = "权限获取"
-                1 -> tab.text = "访问授权"
+                0 -> tab.text = "欢迎"
+                1 -> tab.text = "环境准备"
             }
         }.attach()
     }

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Base64
 import android.view.Gravity
@@ -14,6 +15,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Switch
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -84,6 +86,7 @@ class SettingsActivity : AppCompatActivity() {
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
@@ -100,6 +103,8 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.homeButton).isSelected = false
         findViewById<TextView>(R.id.settingsButton).isSelected = true
 
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
 
         switchSingleAnswerMode = findViewById(R.id.switchSingleAnswerMode)
         val isSingleAnswerMode = sharedPreferences.getBoolean("isSingleAnswerMode", false)

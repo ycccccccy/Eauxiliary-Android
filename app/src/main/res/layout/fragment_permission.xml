@@ -2,23 +2,17 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background">
-
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:visibility="gone" />  <!-- 初始状态设为不可见 -->
+    android:background="@android:color/transparent"
+    android:clickable="true"
+    android:focusable="true">
 
     <TextView
-        android:id="@+id/permission_status_textview"
+        android:id="@+id/welcome_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="已完成授权"
-        android:textSize="20sp"
-        android:visibility="gone" />  <!-- 初始状态设为不可见 -->
+        android:text="欢迎使用本应用!\n\n轻按屏幕以继续"
+        android:textSize="14sp"
+        android:visibility="visible" />
 
 </FrameLayout>

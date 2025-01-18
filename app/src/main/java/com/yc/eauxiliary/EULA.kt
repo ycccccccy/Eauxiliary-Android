@@ -3,6 +3,7 @@ package com.yc.eauxiliary
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -12,6 +13,7 @@ import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
 
@@ -72,12 +74,16 @@ class EULA : AppCompatActivity() {
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("SetTextI18n", "MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_eula)
 
         updateStatusBarTextColor(window)
+
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
 
         sourceActivity = intent.getStringExtra("source")
 

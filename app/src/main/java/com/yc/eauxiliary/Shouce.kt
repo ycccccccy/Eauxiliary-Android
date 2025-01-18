@@ -2,14 +2,17 @@ package com.yc.eauxiliary
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 
 
 class Shouce : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,6 +20,8 @@ class Shouce : AppCompatActivity() {
 
         updateStatusBarTextColor(window)
 
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
 
         val pageTitle = findViewById<TextView>(R.id.pageTitle)
         // 更新标题栏并添加动画效果

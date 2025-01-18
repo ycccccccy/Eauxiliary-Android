@@ -1,7 +1,9 @@
 package com.yc.eauxiliary
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.view.isVisible
@@ -22,7 +25,7 @@ class AnswerActivity : AppCompatActivity() {
     private var cy: Int = 0
     private lateinit var answerContainer: FrameLayout // 用于动画的容器
 
-
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_answer) // 先设置布局
@@ -34,6 +37,9 @@ class AnswerActivity : AppCompatActivity() {
         pagetitle = findViewById(R.id.answer_page_title)
 
         updateStatusBarTextColor(window)
+
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
 
         val title = intent.getStringExtra("TITLE") ?: "答案"
         pagetitle.text = title
@@ -102,6 +108,7 @@ class AnswerActivity : AppCompatActivity() {
     }
 
     @Deprecated("Deprecated in Java")
+    @SuppressLint("RestrictedApi")
     override fun onBackPressed() {
         val left = intent.getIntExtra("CARD_VIEW_LEFT", 0)
         val top = intent.getIntExtra("CARD_VIEW_TOP", 0)

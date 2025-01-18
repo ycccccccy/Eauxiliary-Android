@@ -1,59 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background">
+    android:background="@drawable/background"
+    tools:context=".AnswerActivity">
 
-    <FrameLayout
-        android:id="@+id/answer_container"
+    <!--顶部-->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/answer_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
         android:padding="16dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/answer_toolbar"
+        <ImageView
+            android:id="@+id/answer_back_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onBackArrowClick"
+            android:padding="2dp"
+            android:src="@drawable/ic_arrow_back"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:id="@+id/answer_page_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EAuxiliary"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="20sp"
+            app:layout_constraintStart_toEndOf="@id/answer_back_button"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 中间内容部分-->
+    <ScrollView
+        android:id="@+id/answer_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/answer_page_title"
+        android:layout_marginTop="80dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_marginTop="25dp">
-
-            <ImageView
-                android:id="@+id/answer_back_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:src="@drawable/ic_arrow_back"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="?android:attr/textColorPrimary" />
-
-            <TextView
-                android:id="@+id/answer_page_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="EAuxiliary"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="20sp"
-                app:layout_constraintStart_toEndOf="@id/answer_back_button"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize">
-            app:layout_constraintTop_toBottomOf="@id/answer_toolbar"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/answer_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
                 android:textSize="14sp" />
-        </ScrollView>
 
-    </FrameLayout>
+            <!-- 这里可以添加 AnswerActivity 特有的其他内容 -->
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- 保留原有的 answer_container 用于动画 -->
+    <FrameLayout
+        android:id="@+id/answer_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </FrameLayout>

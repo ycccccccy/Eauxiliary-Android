@@ -12,6 +12,11 @@
         <item name="colorSecondary">#87CEEB</item>
         <item name="colorSurface">@color/white</item>
         <item name="android:textColorPrimary">@color/black</item>
+
+        <!-- 允许内容延伸到系统栏 -->
+        <item name="android:fitsSystemWindows">false</item>
+        <!-- 透明导航栏和状态栏 -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
 

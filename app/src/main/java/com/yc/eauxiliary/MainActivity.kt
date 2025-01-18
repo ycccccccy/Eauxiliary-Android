@@ -20,6 +20,8 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.Window
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -135,6 +137,45 @@ fun updateStatusBarTextColor(window: Window) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
+fun AppCompatActivity.makeNavigationBarTransparentAndKeepSpace() {
+    val window = window
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        // Android 11 (API 30) 及以上
+        window.setDecorFitsSystemWindows(false)
+        val controller = window.insetsController
+        controller?.let {
+            it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
+        }
+        window.navigationBarColor = Color.TRANSPARENT
+        window.isNavigationBarContrastEnforced = false
+        //设置透明状态栏
+        window.statusBarColor = Color.TRANSPARENT
+
+    } else {
+        // Android 11 以下
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        window.navigationBarColor = Color.TRANSPARENT
+        //设置透明状态栏
+        window.statusBarColor = Color.TRANSPARENT
+    }
+}
+
+fun AppCompatActivity.isDarkMode(): Boolean {
+    val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    return currentNightMode == Configuration.UI_MODE_NIGHT_YES
+}
+
+
 // 主活动类
 class MainActivity : AppCompatActivity() {
     // UI 元素
@@ -169,7 +210,7 @@ class MainActivity : AppCompatActivity() {
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
     @SuppressLint("SetTextI18n")
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -202,6 +243,9 @@ class MainActivity : AppCompatActivity() {
         window.exitTransition =
             TransitionInflater.from(this).inflateTransition(R.transition.circular_reveal_exit)
 
+        // 适配导航栏小横条
+        makeNavigationBarTransparentAndKeepSpace()
+
         // 首次运行检查
         val firstRunCheck = FirstRunCheck(this)
         if (firstRunCheck.isFirstRun()) {
@@ -222,6 +266,7 @@ class MainActivity : AppCompatActivity() {
         // 设置为非首次运行
         firstRunCheck.setNotFirstRun()
     }
+
 
     // 初始化 UI 元素
     private fun initUI() {

@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/background"
+    android:background="@android:color/transparent"
     android:padding="16dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:gravity="start"
-        android:text="目录授权"
-        android:textSize="28sp"
-        android:textStyle="bold" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="点击下方按键后会自动构建目标路径，如果无法构建则代表你无法使用本工具获取答案"
-        android:textSize="16sp" />
+        android:text="应用会自动进行环境准备，完成后自动前往主界面"
+        android:textSize="15sp" />
 
     <TextView
         android:id="@+id/selected_directory_textview"
@@ -30,21 +21,5 @@
         android:layout_marginTop="16dp"
         android:textSize="14sp"
         android:visibility="gone" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/select_directory_button"
-        style="@style/Widget.MaterialComponents.Button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="开始"
-        app:backgroundTint="?attr/colorPrimary"
-        app:cornerRadius="10dp" />
-
 
 </LinearLayout>
